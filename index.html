@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#0b0e12" />
+<title>수도권 2층버스 노선 지도</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+<style>
+:root{--bg:#0b0e12;--panel:#121820;--panel2:#171f29;--line:#26313d;--text:#edf2f7;--muted:#9ba9b8;--accent:#59d3c5;--blue:#7ba7ff;--warn:#e4b66c;--bad:#ea8585;--good:#82d7a9;--radius:16px}
+*{box-sizing:border-box}html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif}button,input,select{font:inherit}button{cursor:pointer;color:inherit}a{color:#9bc0ff;text-decoration:none}a:hover{text-decoration:underline}
+#app{height:100dvh;width:100%;display:grid;grid-template-columns:370px 1fr;overflow:hidden}#sidebar{z-index:800;display:flex;flex-direction:column;min-width:0;background:linear-gradient(180deg,#121820,#0f151c);border-right:1px solid var(--line);height:100%;overflow:hidden}#map{height:100%;width:100%;background:#151b22;z-index:1}.leaflet-container{font:inherit;background:#151b22}.leaflet-control-attribution{background:rgba(10,14,18,.78)!important;color:#9eacba!important}.leaflet-control-attribution a{color:#b3caff!important}
+.brand{padding:20px 18px 15px;border-bottom:1px solid var(--line)}.brand-top{display:flex;align-items:center;justify-content:space-between;gap:10px}.brand h1{font-size:19px;line-height:1.25;margin:0;font-weight:800;letter-spacing:-.5px}.brand p{font-size:12px;color:var(--muted);line-height:1.55;margin:8px 0 0}.pill{border:1px solid #38504f;color:#a6e7dc;background:#18302f;border-radius:999px;padding:4px 8px;font-size:10px;font-weight:700;white-space:nowrap}
+.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;padding:12px 14px}.metric{padding:9px;background:#171f29;border:1px solid #26313d;border-radius:12px;min-width:0}.metric b{display:block;font-size:19px;line-height:1.1}.metric span{display:block;font-size:10px;color:var(--muted);margin-top:4px;white-space:nowrap}
+.tabs{display:flex;gap:6px;padding:0 14px 10px}.tab{border:1px solid var(--line);background:#151d26;color:#aeb9c5;border-radius:999px;font-size:11px;padding:7px 10px;flex:1}.tab.active{background:#1b3635;border-color:#386b66;color:#c2fff4;font-weight:700}
+.controls{padding:0 14px 10px;display:grid;gap:8px}.search{width:100%;padding:11px 12px;background:#0d131a;border:1px solid #2c3946;border-radius:11px;color:var(--text);outline:none}.search:focus{border-color:#5caba2}.toolrow{display:flex;gap:7px}.btn{border:1px solid #30404d;background:#1a2530;border-radius:10px;padding:9px 10px;font-size:11px;font-weight:700;flex:1}.btn.primary{background:#1a4541;border-color:#337e75;color:#d5fff8}.btn.ghost{background:transparent}.btn:disabled{opacity:.5;cursor:not-allowed}
+.statusline{padding:8px 14px;border-top:1px solid #202b35;border-bottom:1px solid #202b35;color:var(--muted);font-size:11px;line-height:1.5}.statusline strong{color:#e7eef6}.route-list{overflow:auto;flex:1;padding:9px 10px 14px;overscroll-behavior:contain}.group-title{font-size:10px;color:#8293a4;font-weight:800;letter-spacing:.08em;padding:10px 5px 7px;display:flex;justify-content:space-between}.route-card{display:grid;grid-template-columns:20px 1fr auto;align-items:center;gap:8px;border:1px solid transparent;border-radius:12px;padding:9px 8px;margin:2px 0;background:rgba(255,255,255,.018)}.route-card:hover{background:#1a2530;border-color:#2b3a48}.route-card input{width:16px;height:16px;accent-color:#67d5c6}.route-name{font-size:13px;font-weight:800;letter-spacing:.15px}.route-meta{font-size:10px;color:#91a1b1;margin-top:3px;line-height:1.35}.route-state{font-size:9px;border-radius:999px;padding:4px 6px;background:#2a3038;color:#bdc7d1;white-space:nowrap}.route-state.ok{background:#18372f;color:#9ce4bd}.route-state.independent{background:#213849;color:#a9d5ef}.route-state.hist{background:#3a3020;color:#f0ca8c}.route-state.unknown{background:#302a35;color:#d4b4e8}.route-state.tour{background:#203349;color:#a8d2ff}
+.bottom-note{border-top:1px solid var(--line);padding:10px 14px;color:#8796a5;font-size:10px;line-height:1.55;max-height:118px;overflow:auto}.bottom-note b{color:#bdc9d5}
+#mapbar{position:absolute;z-index:500;top:14px;left:calc(370px + 16px);right:16px;display:flex;align-items:center;gap:8px;pointer-events:none}.mapbadge{pointer-events:auto;background:rgba(13,19,26,.9);backdrop-filter:blur(12px);border:1px solid #344352;border-radius:12px;padding:9px 12px;font-size:11px;color:#dce6ef;box-shadow:0 8px 30px #0005}.mapbadge strong{color:white}.map-spacer{flex:1}.mapbutton{pointer-events:auto;border:1px solid #405260;background:rgba(18,27,36,.95);color:#eaf2fa;border-radius:11px;padding:9px 12px;font-size:11px;font-weight:700;backdrop-filter:blur(12px)}
+#mobileMenu{display:none}.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#17212c;color:#eef4f8}.leaflet-popup-content{margin:10px 13px;font-size:12px;line-height:1.55}.leaflet-popup-content b{font-size:13px}.leaflet-tooltip{background:#111922;color:#e7eef6;border:1px solid #41515f;box-shadow:none}.leaflet-tooltip:before{border-top-color:#41515f}
+#busy{position:absolute;z-index:1200;inset:0;display:none;align-items:center;justify-content:center;background:#05080ca8;backdrop-filter:blur(4px)}#busy.show{display:flex}.busybox{width:min(330px,calc(100% - 40px));padding:20px;border-radius:16px;background:#141d27;border:1px solid #344352;text-align:center}.spinner{width:27px;height:27px;border:3px solid #344352;border-top-color:#71d7c9;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}@keyframes spin{to{transform:rotate(360deg)}}
+#toast{position:absolute;z-index:1300;left:50%;bottom:24px;transform:translateX(-50%);max-width:min(640px,calc(100% - 28px));padding:11px 15px;background:#18242e;border:1px solid #435463;border-radius:12px;color:#ecf5fb;font-size:12px;line-height:1.5;box-shadow:0 10px 30px #0007;display:none}#toast.show{display:block}
+.modal-backdrop{position:fixed;inset:0;background:#0009;z-index:1500;display:none;align-items:center;justify-content:center;padding:18px}.modal-backdrop.open{display:flex}.modal{width:min(620px,100%);max-height:min(85dvh,850px);overflow:auto;background:#141c25;border:1px solid #344252;border-radius:18px;padding:18px;box-shadow:0 20px 60px #0009}.modal h2{font-size:17px;margin:0 0 10px}.modal p,.modal li{font-size:12px;line-height:1.7;color:#c1ccd7}.modal .close{float:right;background:transparent;border:1px solid #3a4958;border-radius:8px;padding:5px 9px}.filegrid{display:grid;gap:9px;margin:14px 0}.filebox{padding:11px;border:1px dashed #526272;border-radius:11px;background:#101720}.filebox label{font-size:12px;font-weight:700;display:block;margin-bottom:6px}.filebox small{display:block;color:#8e9ead;font-size:10px;margin-top:5px}.filebox input{max-width:100%;font-size:11px;color:#cbd6e0}.source-list{padding-left:18px}.source-list a{overflow-wrap:anywhere}
+@media(max-width:800px){#app{display:block}#map{position:absolute;inset:0;height:100%;width:100%}#sidebar{position:absolute;left:0;right:0;bottom:0;top:auto;height:48dvh;max-height:590px;min-height:210px;border-right:0;border-top:1px solid #364452;border-radius:18px 18px 0 0;box-shadow:0 -12px 34px #0008;transition:height .22s ease;z-index:900}#sidebar.collapsed{height:190px}#sidebar.expanded{height:78dvh;max-height:820px}.brand{padding:12px 15px 9px}.brand h1{font-size:16px}.brand p{font-size:10px;margin-top:5px}.summary{padding:8px 12px;gap:6px}.metric{padding:7px}.metric b{font-size:16px}.metric span{font-size:9px}.tabs{padding:0 12px 8px}.controls{padding:0 12px 8px;gap:6px}.search{padding:9px}.btn{padding:8px}.statusline{padding:7px 12px}.route-list{padding:6px 9px 12px}.bottom-note{max-height:80px;padding:8px 12px}#mapbar{left:12px;right:12px;top:12px;gap:6px}.mapbadge{font-size:10px;padding:8px 10px}.mapbutton{font-size:10px;padding:8px 10px}#mobileMenu{display:block;position:absolute;z-index:1100;left:12px;bottom:calc(48dvh + 10px);padding:8px 11px;background:#141e28;border:1px solid #485868;border-radius:10px;color:#eef4fa;font-weight:700;font-size:11px}.collapsed #mobileMenu{bottom:200px}.leaflet-bottom{bottom:48dvh!important}.leaflet-control-attribution{font-size:8px!important}}
+@media(max-width:430px){.mapbadge.secondary{display:none}.brand .pill{font-size:9px}.route-card{padding:8px 6px}.route-meta{font-size:9px}}
+</style>
+</head>
+<body>
+<div id="app">
+  <aside id="sidebar">
+    <header class="brand">
+      <div class="brand-top"><h1>수도권 2층버스 노선 지도</h1><span class="pill">KEYLESS · OSM</span></div>
+      <p>경기도 공식 2층버스 현황을 기준으로 삼고, 인천·서울 관광 노선 및 과거 운행 이력은 별도 구분합니다.</p>
+    </header>
+    <section class="summary">
+      <div class="metric"><b id="confirmedCount">47</b><span>GBIS 전날 현황</span></div>
+      <div class="metric"><b id="extraCount">2</b><span>별도 근거</span></div>
+      <div class="metric"><b id="candidateCount">45</b><span>검증·과거 운행</span></div>
+    </section>
+    <div class="tabs">
+      <button class="tab active" data-filter="all">전체 목록</button>
+      <button class="tab" data-filter="confirmed">GBIS·별도 근거</button>
+      <button class="tab" data-filter="candidate">검증 필요</button>
+    </div>
+    <div class="controls">
+      <input id="search" class="search" type="search" placeholder="노선번호 또는 지역 검색" autocomplete="off" />
+      <div class="toolrow"><button id="loadOsm" class="btn primary">OSM 노선·정류장 불러오기</button><button id="allOn" class="btn">전체 켜기</button></div>
+      <div class="toolrow"><button id="allOff" class="btn ghost">전체 끄기</button><button id="dataImport" class="btn ghost">공식 좌표 파일 가져오기</button></div>
+    </div>
+    <div id="statusline" class="statusline"><strong>대기 중</strong> · 지도를 그릴 실제 경로 데이터가 아직 로드되지 않았습니다.</div>
+    <section id="routeList" class="route-list"></section>
+    <footer class="bottom-note"><b>데이터 정책</b><br>실선은 OSM 노선관계의 실제 도로 형상, 정류장 점은 OSM 또는 가져온 공식 정류장 좌표입니다. 데이터가 없는 노선은 직선·추정경로로 대체하지 않습니다.</footer>
+  </aside>
+  <main id="map"></main>
+</div>
+<div id="mapbar">
+  <div class="mapbadge"><strong id="mapStatus">노선 데이터 대기 중</strong><span id="stopStatus"> · 정류장 0개</span></div>
+  <div class="map-spacer"></div>
+  <div class="mapbadge secondary">CartoDB Dark Matter · OpenStreetMap</div>
+  <button id="fitMap" class="mapbutton">표시 노선 맞춤</button>
+  <button id="openSources" class="mapbutton">자료·검증 기준</button>
+</div>
+<button id="mobileMenu">목록 접기/펼치기</button>
+<div id="busy"><div class="busybox"><div class="spinner"></div><b id="busyTitle">노선 자료를 가져오는 중</b><p id="busyText" style="font-size:11px;color:#a7b5c3;line-height:1.6">Overpass 공개 서버에 연결하고 있습니다.</p></div></div>
+<div id="toast"></div>
+
+<div id="importModal" class="modal-backdrop">
+ <div class="modal">
+  <button class="close" data-close="importModal">닫기</button>
+  <h2>경기버스정보 공식 좌표 파일 가져오기</h2>
+  <p>GBIS는 버스노선·노선경유·정류소 자료를 공개 다운로드로 제공하지만, 정류장 API 및 노선형상 API는 공공데이터포털 서비스키를 요구합니다. 아래 파일은 웹페이지에서 내려받아 브라우저 안에서만 처리할 수 있습니다. 업로드한 데이터는 서버로 전송되지 않습니다.</p>
+  <div class="filegrid">
+   <div class="filebox"><label>① 버스노선정보 (노선 ID ↔ 노선번호)</label><input id="routeFile" type="file" accept=".xlsx,.xls,.csv,.txt" /><small><a href="https://www.gbis.go.kr/service/adm/banner/download.action?cmd=download&fName=GGD_RouteInfo_M.xlsx" target="_blank" rel="noopener">공식 파일 다운로드</a></small></div>
+   <div class="filebox"><label>② 노선경유정보 (노선 ID ↔ 정류소 순서)</label><input id="routeStationFile" type="file" accept=".xlsx,.xls,.csv,.txt" /><small><a href="https://www.gbis.go.kr/service/adm/banner/download.action?cmd=download&fName=GGD_RouteStationInfo_M.xlsx" target="_blank" rel="noopener">공식 파일 다운로드</a></small></div>
+   <div class="filebox"><label>③ 정류소정보 (정류소 ID ↔ 이름·좌표)</label><input id="stationFile" type="file" accept=".xlsx,.xls,.csv,.txt" /><small><a href="https://www.gbis.go.kr/service/adm/banner/download.action?cmd=download&fName=GGD_StationInfo_M.xlsx" target="_blank" rel="noopener">공식 파일 다운로드</a></small></div>
+   <div class="filebox"><label>④ 노선형상정보 (선택 · routeId별 도로 경로 좌표)</label><input id="routeLineFile" type="file" accept=".xlsx,.xls,.csv,.txt" /><small>GBIS routeLine 형상 자료 또는 동일 구조의 경로 좌표 파일. 선택 항목이며 제공된 경우 OSM 선형보다 우선 표시합니다.</small></div>
+   <div class="filebox"><label>좌표계 선택 (파일의 X/Y 좌표에만 적용)</label><select id="coordinateSystem" class="search"><option value="auto">자동 — 경위도 좌표만 인식 (평면좌표는 건너뜀)</option><option value="EPSG:5179">EPSG:5179 · UTM-K</option><option value="EPSG:5181">EPSG:5181 · 중부원점 (Y=500,000m)</option><option value="EPSG:5186">EPSG:5186 · 중부원점 (Y=600,000m)</option></select><small>원본 파일의 좌표계 메타데이터를 확인한 뒤 선택하세요. 알 수 없다면 자동을 유지해야 하며, 임의 선택은 위치 오류를 만듭니다.</small></div>
+  </div>
+  <p>노선정보·노선경유정보·정류소정보 3개는 필수이며, 노선형상정보는 선택입니다. X/Y 평면좌표는 원본 좌표계가 확인된 경우에만 위·경도로 변환합니다. 이 파일들은 경기도 버스정보 기반 데이터이며 서울시티투어 등 모든 사업자·지역을 포괄하지 않을 수 있습니다.</p>
+  <div class="toolrow"><button id="importFiles" class="btn primary">선택한 파일 가져오기</button><button class="btn" data-close="importModal">취소</button></div>
+ </div>
+</div>
+<div id="sourceModal" class="modal-backdrop">
+ <div class="modal">
+  <button class="close" data-close="sourceModal">닫기</button>
+  <h2>자료 출처 및 검증 기준</h2>
+  <p><b>GBIS 현행 표 47개</b>는 경기버스정보의 2층버스 노선현황에 현재 노출된 경기도 항목입니다. 해당 페이지는 정보가 전날 기준이며 운수업체에 따라 변동될 수 있다고 안내합니다. 이 표가 서울·인천 전체를 포괄하는 전국 목록은 아닙니다.</p>
+  <p><b>별도 근거 2개</b> 중 1680은 구리시의 2024년 7월 25일 민원 답변에서 2층버스 배차 관련 언급을 확인했고, M4101은 2026년 10월 7일 경기고속 민원 답변에 인용된 이용자 제보에서 2층 차량 운행 사례를 확인했습니다. GBIS 2층 현황 표에는 없으므로 현행 확정 목록과 구분합니다.</p>
+  <p><b>검증·과거 기록</b>에는 제공 목록의 미확인 번호, 과거 공식 자료에서만 2층 차량 운행이 확인된 번호, 서울시티투어처럼 운행 편성에 따라 차량 종류가 달라지는 코스를 넣었습니다. 2021년 국토교통부 자료의 노선 수는 당시 기준이며 현재 노선수와 직접 비교할 수 없습니다.</p>
+  <p>2021년 한국교통연구원 조사에는 수도권 74개 노선·288대가 기록돼 있지만, 이는 2021년 2월 기준의 과거 자료입니다. 당시 노선번호와 현재 노선번호가 다르거나 폐지·변경됐을 수 있습니다.</p>
+  <ul class="source-list">
+   <li><a href="https://www.gbis.go.kr/service/busInfo/lowfloorBus.action?cmd=secondfloorAuto" target="_blank" rel="noopener">경기버스정보 — 2층버스 현황</a></li>
+   <li><a href="https://www.gbis.go.kr/gbis2014/publicService.action?cmd=mBaseInfo" target="_blank" rel="noopener">경기버스정보 — 정류소·노선경유·노선형상 파일 명세</a></li>
+   <li><a href="https://www.gbis.go.kr/gbis2014/publicService.action?cmd=mBusRouteStation" target="_blank" rel="noopener">경기버스정보 — 노선 경유 정류소 API 설명</a></li>
+   <li><a href="https://www.gbis.go.kr/gbis2014/publicService.action?cmd=mBusRouteLine" target="_blank" rel="noopener">경기버스정보 — 노선형상 API 설명</a></li>
+   <li><a href="https://www.guri.go.kr/mayor/selectBbsNttView.do?bbsNo=482&integrDeptCode=&key=1165&nttNo=112797&pageIndex=390&searchCnd=all&searchCtgry=&searchKrwd=" target="_blank" rel="noopener">구리시 — 1680번 2층버스 배차 민원 답변 (2024-07-25)</a></li>
+   <li><a href="https://molit.go.kr/USR/NEWS/m_35045/dtl.jsp?id=95085463&lcmspage=4" target="_blank" rel="noopener">국토교통부 — 2021년 2층 전기버스 도입 노선(M6117·M6450·M2323·M2353 등)</a></li>
+   <li><a href="https://www.gbus.or.kr/lost-items-and-civil-complaints-consultation/report-traffic-inconvenience?board_code=5&code=176752&tpf=board%2Fview" target="_blank" rel="noopener">경기버스운송사업조합 — M4101 민원 답변 (2026-10-07)</a></li>
+   <li><a href="https://www.codil.or.kr/filebank/original/RK/OTKCRK240571/OTKCRK240571.pdf" target="_blank" rel="noopener">한국교통연구원 — 대도시권 광역교통조사 통계구축 (2021.03)</a></li>
+   <li><a href="https://www.seoulcitybus.com/ko/map" target="_blank" rel="noopener">서울시티투어 — 공식 코스·정류장 목록</a></li>
+  </ul>
+  <p><b>좌표·노선형상 제한:</b> 경기버스정보 API의 경유정류소·노선형상 조회에는 서비스키가 필요합니다. 공개 파일의 X/Y 좌표계는 명세 페이지에 기재되어 있지 않으므로 자동 추측하지 않습니다. 사용자가 원본 좌표계를 확인해 선택한 경우에만 변환합니다. OSM 노선관계 또는 실제 노선형상 파일이 없는 노선은 선형을 추정해 그리지 않습니다.</p>
+ </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/proj4@2.12.1/dist/proj4.js"></script>
+<script>
+(() => {
+'use strict';
+const official = [
+['6601','김포','현대프라임아파트','당산역광역환승센터'],['7000','김포','구래리차고지','당산역광역환승센터'],['7100','김포','구래리차고지','당산역광역환승센터'],['8600','김포','차량대기','광화문역'],['M6427','김포','양곡터미널','강남역'],
+['8002','남양주','대성리','잠실광역환승센터'],['3330','성남','도촌동9단지앞','안양역'],
+['3008','수원','수원아이파크시티','강남역'],['7770','수원','서둔동차고지','사당역'],['7780','수원','호매실동차고지','사당역'],['7800','수원','호매실동차고지','사당역'],['G5100','수원','수원남부버스공영차고지','강남역'],
+['3200','시흥','포동차고지','삼성서초역삼세무서'],['3300','시흥','능곡공영차고지','삼성서초역삼세무서'],['3400','시흥','한국공학대학교','삼성서초역삼세무서'],['5609','안산','새솔고','여의도환승센터'],['4401','안성','한경국립대학교','강남역'],
+['1311','오산','한라·이림아파트','강남역'],['5300','오산','한국양계농협평택유통센터','신논현역'],
+['5000','용인','남동차고지','서울역버스환승센터'],['5002A','용인','남동차고지','신논현역'],['5002B','용인','남동차고지','신논현역'],['5003A','용인','남동차고지','신논현역'],['5003B','용인','남동차고지','신논현역'],['5005','용인','남동차고지','서울역버스환승센터'],['5006','용인','광교차고지','강남역'],['5500-2','용인','광교차고지','세종문화회관'],
+['G6000','의정부','민락동종점','잠실광역환승센터'],['6600','평택','비전푸르지오','강남역'],['M5438','평택','평택지제역','강남역'],['3006','포천','경복대·포천캠퍼스','잠실광역환승센터'],
+['3000','하남','미사역호반써밋','금토천교'],['9302','하남','BRT공영버스차고지','잠실광역환승센터'],
+['1006','화성','수원대학교','강남역'],['4108','화성','나루마을·월드반도','서울역버스환승센터'],['4403','화성','나루마을·월드반도','강남역'],['6001','화성','동탄2차고지','강남역'],['6002','화성','동탄2차고지','강남역'],['6003','화성','동탄2차고지','판교역'],['7790','화성','협성대정문','사당역'],['8155','화성','경진여객차고지','사당역'],['G6009','화성','호수자이·아이원','잠실광역환승센터'],['M4108','화성','나루마을·월드반도','서울역버스환승센터'],['M4130','화성','호수자이·아이원','서울역버스환승센터'],['M4137','화성','아이파크·센트럴시티','서울역버스환승센터'],['M4403','화성','나루마을·월드반도','강남역'],['M4448','화성','아이파크·센트럴시티','강남역']
+].map(([n,city,start,end])=>({n,city,start,end,level:'official',source:'GBIS 2층버스 노선현황'}));
+const extras = [
+{n:'1680',city:'구리',start:'갈매역',end:'잠실광역환승센터',level:'corroborated',source:'구리시 민원 답변(2024-07-25)'},
+{n:'M4101',city:'용인·수지',start:'상현역',end:'숭례문',level:'corroborated',source:'경기버스운송사업조합 민원(2026-10-07)'}
+];
+const historical = new Set(['M2323','M6450','M6117','M2353','1000','1113-1','1680','7000','7100','6427','8601','8012','1000-1','1001','1003','1670','8002','3330','4500','3008','G5100','7770','7780','7800','3200','3300','3400','300','3102','5609','G1300','5300','1311','5006','5500-2','5000A','5000B','5001','5002A','5002B','5003A','5003B','2200','G7111','7300','7500','7700','9030','7701','9710','9710-1','G7426','M5438','3100','9302','9303-1','8155','4108','4403','6001','6002','6003']);
+const candidateData = [
+['1000','고양'],['1113-1','광주'],['M2323','남양주'],['M2352','남양주'],['M6450','인천·송도'],['6701','김포'],['1001','남양주'],['1003','남양주'],['1670','남양주'],['8012','남양주'],['1009','화성'],['5001','용인'],['5401','평택'],['G6100','의정부'],['2200','파주'],['2200-1','파주'],['9030','파주'],['9710','파주'],['G7426','파주'],['8501','화성'],['8502','화성'],['9302-1','하남'],['G1300','양주'],['3102','안산'],['TOUR01','서울 관광'],['TOUR11','서울 관광'],['TOUR02','서울 관광'],['TOUR04','서울 관광'],['M6117','김포'],['M2353','남양주'],['1000-1','남양주'],['4500','성남'],['300','안산'],['5000A','용인'],['5000B','용인'],['G7111','파주'],['7300','파주'],['7500','파주'],['7700','파주'],['7701','파주'],['9710-1','파주'],['3100','포천'],['9303-1','하남'],['8601','김포'],['6427','김포']
+];
+const candidates = candidateData.map(([n,city])=>({n,city,level:n.startsWith('TOUR')?(n==='TOUR11'?'unverified':'tour'):(historical.has(n)?'historic':'unverified'),source:n.startsWith('TOUR')?(n==='TOUR11'?'현재 서울시티투어 공식 노선 목록에서 확인되지 않음':'서울시티투어 공식 코스; 편성 차량이 1층·2층으로 달라질 수 있음'):(historical.has(n)?'과거 공식 자료에서 2층 운행 기록 확인(현행 여부 미확인)':'제공 목록에 포함되나 최신 2층 운행 근거 미확인')}));
+const all = [...official,...extras,...candidates];
+const routeByName = new Map(all.map(r=>[norm(r.n),r]));
+const providedNames = ['1113-1','1000','M2323','M2352','M4101','M4108','M4130','M4137','M4403','M4448','M5438','M6427','M6450','1680','6601','6701','7000','7100','8600','1001','1003','1670','8002','8012','TOUR01','TOUR11','3330','3008','7770','7780','7800','G5100','3200','3300','3400','5609','4401','G1300','1311','5300','5000','5001','5002','5003','5005','5006','5500-2','G6000','G6100','2200','2200-1','9030','9710','G7426','5401','6600','3006','3000','9302','9302-1','1006','1009','3102','4108','4403','6001','6002','6003','7790','8155','8501','8502','G6009'];
+const osmEndpoints = ['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter','https://overpass.nchc.org.tw/api/interpreter'];
+let osmRelations = new Map(), localStops = new Map(), localPaths = new Map(), activeLayers = new Map(), currentFilter='all';
+let map;
+function norm(v){return String(v??'').toUpperCase().replace(/[\s·・]/g,'').replace(/번$/,'').trim()}
+function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function colorFor(s){let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))%360;return `hsl(${h},76%,62%)`}
+function routeExtraNote(r){return ['5002A','5002B'].includes(r.n)?'사용자 목록의 5002번은 현재 A/B 분기 표기':(['5003A','5003B'].includes(r.n)?'사용자 목록의 5003번은 현재 A/B 분기 표기':'')}
+function stateText(r){return r.level==='official'?'GBIS 현황':r.level==='corroborated'?'별도 근거':r.level==='historic'?'과거 기록':r.level==='tour'?'관광·차종 혼합':'확인 필요'}
+function stateClass(r){return r.level==='official'?'ok':r.level==='corroborated'?'independent':r.level==='historic'?'hist':r.level==='tour'?'tour':'unknown'}
+function statusHtml(r){return `<span class="route-state ${stateClass(r)}">${stateText(r)}</span>`}
+function updateCounts(){
+ document.getElementById('confirmedCount').textContent=official.length;
+ document.getElementById('extraCount').textContent=extras.length;
+ document.getElementById('candidateCount').textContent=candidates.length;
+}
+function renderList(){
+ const q=norm(document.getElementById('search').value);const list=document.getElementById('routeList');list.innerHTML='';
+ const current=[...official,...extras], other=candidates;
+ const matches=r=>(!q||norm(r.n).includes(q)||norm(r.city).includes(q)||norm(r.start||'').includes(q)||norm(r.end||'').includes(q)) && (currentFilter==='all'||(currentFilter==='confirmed'&&current.includes(r))||(currentFilter==='candidate'&&other.includes(r)));
+ const groups=[{title:'현행 표 · GBIS 공식 목록',rows:official.filter(matches)},{title:'별도 근거 · GBIS 현황표 외 확인',rows:extras.filter(matches)},{title:'검증·과거 운행 · 사용자 목록 외 포함',rows:candidates.filter(matches)}];
+ for(const g of groups){if(!g.rows.length)continue;const h=document.createElement('div');h.className='group-title';h.innerHTML=`<span>${g.title}</span><span>${g.rows.length}</span>`;list.appendChild(h);
+  for(const r of g.rows){const card=document.createElement('label');card.className='route-card';const key=norm(r.n);const checked=activeLayers.get(key)?.on??(r.level==='official'||r.level==='corroborated');card.innerHTML=`<input type="checkbox" data-route="${escapeHtml(key)}" ${checked?'checked':''}><div><div class="route-name">${escapeHtml(r.n)} <span style="font-size:10px;color:#8090a0;font-weight:500">${escapeHtml(r.city)}</span></div><div class="route-meta">${escapeHtml(r.start||r.source)}${r.end?` → ${escapeHtml(r.end)}`:''}<br>${escapeHtml(routeExtraNote(r)||r.source)}</div></div>${statusHtml(r)}`;list.appendChild(card);
+  }
+ }
+ list.querySelectorAll('input[data-route]').forEach(el=>el.addEventListener('change',()=>setRouteVisible(el.dataset.route,el.checked)));
+}
+function setStatus(title,detail){document.getElementById('statusline').innerHTML=`<strong>${escapeHtml(title)}</strong> · ${escapeHtml(detail)}`;document.getElementById('mapStatus').textContent=title;}
+function toast(t){const e=document.getElementById('toast');e.textContent=t;e.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('show'),5200)}
+function busy(on,title='',detail=''){document.getElementById('busy').classList.toggle('show',on);if(title)document.getElementById('busyTitle').textContent=title;if(detail)document.getElementById('busyText').textContent=detail}
+function routeKeysForQuery(){return [...new Set([...official,...extras,...candidates].map(r=>r.n).filter(n=>!n.startsWith('TOUR')).concat(['5000A','5000B','5002A','5002B','5003A','5003B']))]}
+function relationMatch(ref){const r=norm(ref);if(!r)return null;if(routeByName.has(r))return r;
+ // A/B split routes roll up to the source route code as well as their own card.
+ if(/^500[023][AB]$/.test(r)){const parent=r.slice(0,-1);return routeByName.has(parent)?parent:r}
+ return null;
+}
+async function fetchOverpass(){
+ const refs=routeKeysForQuery().map(s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|');
+ const q=`[out:json][timeout:150];area["ISO3166-1"="KR"][admin_level=2]->.kr;(relation["type"="route"]["route"~"^(bus|coach)$"]["ref"~"^(${refs})$",i](area.kr););out body;>;out geom;`;
+ let lastError;
+ for(const endpoint of osmEndpoints){try{const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),165000);const res=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:'data='+encodeURIComponent(q),signal:controller.signal});clearTimeout(timeout);if(!res.ok)throw new Error(`Overpass HTTP ${res.status}`);const data=await res.json();if(!data.elements)throw new Error('Overpass 응답 형식 오류');return data;}catch(e){lastError=e;}}
+ throw lastError||new Error('Overpass 서버 연결 실패');
+}
+function parseRelations(data){
+ const ways=new Map(),nodes=new Map();for(const e of data.elements){if(e.type==='way')ways.set(e.id,e);if(e.type==='node')nodes.set(e.id,e)}
+ const found=new Map();
+ for(const rel of data.elements.filter(e=>e.type==='relation')){
+  const ref=rel.tags?.ref||rel.tags?.route_ref||rel.tags?.name||'';const key=relationMatch(ref);if(!key)continue;
+  const entry={id:rel.id,ref:String(ref),name:rel.tags?.name||'',members:rel.members||[],geometry:[],stops:[],tags:rel.tags||{}};
+  for(const m of (rel.members||[])){
+   if(m.type==='way'){
+    const w=ways.get(m.ref);const geom=m.geometry||w?.geometry;if(geom?.length>1)entry.geometry.push(geom.map(p=>[p.lat,p.lon]));
+   }
+   if(m.type==='node'&&/stop|platform|station/i.test(m.role||'')){
+    const n=nodes.get(m.ref);if(n?.lat!=null&&n?.lon!=null)entry.stops.push({id:m.ref,lat:n.lat,lon:n.lon,role:m.role||'stop',name:n.tags?.name||n.tags?.local_ref||''});
+   }
+  }
+  if(!found.has(key))found.set(key,[]);found.get(key).push(entry);
+ }
+ return found;
+}
+function makeRouteLayer(key){
+ const group=L.layerGroup();const route=routeByName.get(key)||{n:key,city:'',level:'unverified'};const data=osmRelations.get(key)||[];const color=colorFor(route.n);
+ for(const rel of data){for(const geom of rel.geometry){if(geom.length>1)L.polyline(geom,{color,weight:4,opacity:.9,lineCap:'round',lineJoin:'round'}).bindPopup(`<b>${escapeHtml(route.n)}</b><br>${escapeHtml(route.city)} · OSM relation ${rel.id}<br>${escapeHtml(rel.name||rel.ref)}`).addTo(group)}
+  for(const s of rel.stops){L.circleMarker([s.lat,s.lon],{radius:4,weight:1.2,color:'#081018',fillColor:color,fillOpacity:.98}).bindTooltip(`${escapeHtml(s.name||'정류장')} · ${escapeHtml(route.n)}`).addTo(group)}
+ }
+ const importedPath=localPaths.get(key)||[];
+ if(importedPath.length>1)L.polyline(importedPath,{color,weight:4,opacity:.98,lineCap:'round',lineJoin:'round',dashArray:'7 4'}).bindPopup(`<b>${escapeHtml(route.n)}</b><br>${escapeHtml(route.city)} · GBIS 노선형상 파일`).addTo(group);
+ const imported=localStops.get(key)||[];
+ for(const s of imported){L.circleMarker([s.lat,s.lon],{radius:4,weight:1.3,color:'#101820',fillColor:color,fillOpacity:1}).bindPopup(`<b>${escapeHtml(route.n)}</b><br>${escapeHtml(s.name||'정류장')}<br>정류장 순번 ${s.seq??'정보 없음'}<br><small>GBIS 파일에서 가져온 좌표</small>`).addTo(group)}
+ return {group,paths:data.reduce((a,r)=>a+r.geometry.length,0)+(importedPath.length>1?1:0),osmStops:data.reduce((a,r)=>a+r.stops.length,0),importedStops:imported.length,rels:data.length};
+}
+function setRouteVisible(key,on){
+ const meta=routeByName.get(key);if(!meta)return;
+ let info=activeLayers.get(key);if(!info){info=makeRouteLayer(key);activeLayers.set(key,info)}
+ info.on=on;if(on)info.group.addTo(map);else map.removeLayer(info.group);
+ updateMapCounters();
+}
+function refreshAllLayers(){for(const [k,info] of activeLayers){map.removeLayer(info.group)}activeLayers.clear();renderList();for(const r of [...official,...extras,...candidates]){const k=norm(r.n);const checkbox=document.querySelector(`input[data-route="${CSS.escape(k)}"]`);if(checkbox?.checked)setRouteVisible(k,true)}updateMapCounters()}
+function updateMapCounters(){
+ let paths=0,stops=0,shown=0;for(const [k,info] of activeLayers){if(info.on){shown++;paths+=info.paths;stops+=info.osmStops+info.importedStops}}
+ document.getElementById('mapStatus').textContent=`표시 노선 ${shown}개 · 경로 ${paths}개`;document.getElementById('stopStatus').textContent=` · 정류장 ${stops.toLocaleString()}개`;
+}
+async function loadOsm(){
+ busy(true,'OSM 노선관계 조회 중','한국 영역에서 후보 노선의 route=bus 관계와 경유 정류장 좌표를 검색합니다. 서버 혼잡 시 다른 공개 Overpass 서버로 재시도합니다.');
+ try{const data=await fetchOverpass();osmRelations=parseRelations(data);refreshAllLayers();let relations=0,paths=0,stops=0;for(const a of osmRelations.values())for(const r of a){relations++;paths+=r.geometry.length;stops+=r.stops.length}
+  const matched=[...osmRelations.keys()].length;setStatus(`OSM 조회 완료 · 관계 ${relations}개`,`후보 ${routeKeysForQuery().length}개 중 일치 노선 ${matched}개, 도로 선형 ${paths}개, OSM 정류장 ${stops}개. OSM에 없는 노선은 표시되지 않습니다.`);
+  toast(`OSM 조회 완료: ${matched}개 노선 관계를 찾았습니다. 정류장·경로가 없는 노선은 공식 좌표 파일을 가져오세요.`);
+ }catch(e){console.error(e);setStatus('OSM 조회 실패',`${e.message||e}. 잠시 후 재시도하거나 공식 좌표 파일을 가져오세요.`);toast('Overpass 공개 서버에 연결하지 못했습니다. 서버 혼잡일 수 있으니 다시 시도해 주세요.');}
+ finally{busy(false);}
+}
+function fitVisible(){const bounds=[];for(const info of activeLayers.values()){if(!info.on)continue;info.group.eachLayer(l=>{if(l.getBounds){const b=l.getBounds();if(b.isValid())bounds.push(b)}else if(l.getLatLng)bounds.push(L.latLngBounds(l.getLatLng(),l.getLatLng()))})}if(bounds.length){let b=bounds[0];for(let i=1;i<bounds.length;i++)b.extend(bounds[i]);map.fitBounds(b.pad(.08),{maxZoom:12})}else toast('표시 중인 실제 경로가 없습니다. 노선을 켜고 데이터를 먼저 불러오세요.')}
+function openModal(id){document.getElementById(id).classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+function headerMap(rows){
+ const keys=Object.keys(rows[0]||{});
+ const normKey=k=>String(k).toLowerCase().replace(/[\s_\-().]/g,'');
+ const find=aliases=>{
+  for(const a of aliases){const hit=keys.find(k=>normKey(k)===a);if(hit)return hit;}
+  for(const a of aliases){if(a.length>1){const hit=keys.find(k=>normKey(k).includes(a));if(hit)return hit;}}
+  return undefined;
+ };
+ return {
+  routeId:find(['routeid','노선id','노선아이디']),routeName:find(['routename','routeno','routenm','노선번호','노선명']),
+  stationId:find(['stationid','정류소id','정류장id','정류소아이디']),stationName:find(['stationname','stationnm','정류소명','정류장명']),
+  seq:find(['stationseq','stationorder','staorder','lineseq','정류소순번','정류장순번','순번']),
+  lon:find(['longitude','lon','lng','gpsx좌표','gpsx','경도']),lat:find(['latitude','lat','gpsy좌표','gpsy','위도']),
+  x:find(['x','xcoord','x좌표','gpsx좌표','gpsx']),y:find(['y','ycoord','y좌표','gpsy좌표','gpsy'])
+ };
+}
+async function readSheet(file){
+ const name=(file.name||'').toLowerCase();let wb;
+ if(name.endsWith('.xlsx')||name.endsWith('.xls')){const buf=await file.arrayBuffer();wb=XLSX.read(buf,{type:'array',cellDates:false});}
+ else {const txt=await file.text();const head=txt.slice(0,6000);const counts=[['\t',(head.match(/\t/g)||[]).length],[',',(head.match(/,/g)||[]).length],['|',(head.match(/\|/g)||[]).length],[';',(head.match(/;/g)||[]).length]];counts.sort((a,b)=>b[1]-a[1]);wb=XLSX.read(txt,{type:'string',FS:counts[0][0],cellDates:false});}
+ const ws=wb.Sheets[wb.SheetNames[0]];return XLSX.utils.sheet_to_json(ws,{defval:'',raw:true});
+}
+function coordFromRow(row,h){
+ let lon=h.lon?Number(row[h.lon]):NaN,lat=h.lat?Number(row[h.lat]):NaN;
+ if(lon>120&&lon<135&&lat>30&&lat<40)return {lon,lat};
+ const x=h.x?Number(row[h.x]):NaN,y=h.y?Number(row[h.y]):NaN;
+ if(!(Number.isFinite(x)&&Number.isFinite(y)))return null;
+ // No implicit CRS guess: GBIS publishes x/y fields, but its file manual does not specify their CRS.
+ const crs=document.getElementById('coordinateSystem')?.value||'auto';
+ if(crs==='auto'||!window.proj4)return null;
+ const defs={
+  'EPSG:5179':'+proj=tmerc +lat_0=38 +lon_0=127.5 +k=0.9996 +x_0=1000000 +y_0=2000000 +ellps=GRS80 +units=m +no_defs +type=crs',
+  'EPSG:5181':'+proj=tmerc +lat_0=38 +lon_0=127 +k=1 +x_0=200000 +y_0=500000 +ellps=GRS80 +units=m +no_defs +type=crs',
+  'EPSG:5186':'+proj=tmerc +lat_0=38 +lon_0=127 +k=1 +x_0=200000 +y_0=600000 +ellps=GRS80 +units=m +no_defs +type=crs'
+ };
+ const def=defs[crs];if(!def)return null;
+ try{proj4.defs(crs,def);const p=proj4(crs,'EPSG:4326',[x,y]);if(p[0]>120&&p[0]<135&&p[1]>30&&p[1]<40)return {lon:p[0],lat:p[1]};}catch(e){console.warn('좌표변환 실패',e)}
+ return null;
+}
+async function importOfficialFiles(){
+ const rf=document.getElementById('routeFile').files[0],rsf=document.getElementById('routeStationFile').files[0],sf=document.getElementById('stationFile').files[0],rlf=document.getElementById('routeLineFile').files[0];
+ if(!rf||!rsf||!sf){toast('노선정보·노선경유정보·정류소정보 파일 3개를 모두 선택해 주세요.');return}
+ if(!window.XLSX){toast('엑셀 해석 라이브러리를 불러오지 못했습니다. 인터넷 연결을 확인해 주세요.');return}
+ if(document.getElementById('coordinateSystem').value!=='auto'&&!window.proj4){toast('좌표변환 라이브러리를 불러오지 못했습니다. 인터넷 연결을 확인해 주세요.');return}
+ busy(true,'공식 자료 분석 중','파일을 브라우저 메모리에서 처리하고 노선별 정류장 순서를 결합합니다. 파일 크기에 따라 시간이 걸릴 수 있습니다.');
+ try{
+  const [routeRows,routeStationRows,stationRows,routeLineRows]=await Promise.all([readSheet(rf),readSheet(rsf),readSheet(sf),rlf?readSheet(rlf):Promise.resolve([])]);
+  if(!routeRows.length||!routeStationRows.length||!stationRows.length)throw new Error('파일에서 표 데이터를 읽지 못했습니다.');
+  const rh=headerMap(routeRows),rsh=headerMap(routeStationRows),sh=headerMap(stationRows);
+  if(!rh.routeId||!rh.routeName)throw new Error('노선정보 파일에서 routeId / routeName 열을 찾지 못했습니다.');
+  if(!rsh.routeId||!rsh.stationId)throw new Error('노선경유정보 파일에서 routeId / stationId 열을 찾지 못했습니다.');
+  if(!sh.stationId)throw new Error('정류소정보 파일에서 stationId 열을 찾지 못했습니다.');
+  const routeNames=new Map();for(const r of routeRows){const id=String(r[rh.routeId]).trim(),name=String(r[rh.routeName]).trim();if(id&&name)routeNames.set(id,name)}
+  const stationMeta=new Map();for(const r of stationRows){const id=String(r[sh.stationId]).trim();if(!id)continue;const c=coordFromRow(r,sh);if(c)stationMeta.set(id,{...c,name:sh.stationName?String(r[sh.stationName]).trim():'',id})}
+  const grouped=new Map();let skipped=0,processed=0;
+  for(const r of routeStationRows){const id=String(r[rsh.routeId]).trim(),sid=String(r[rsh.stationId]).trim();if(!id||!sid)continue;const routeName=(rsh.routeName?String(r[rsh.routeName]).trim():'')||routeNames.get(id);if(!routeName)continue;const key=norm(routeName);const s=stationMeta.get(sid);const rowC=coordFromRow(r,rsh);const c=s||rowC;if(!c){skipped++;continue}const name=(rsh.stationName?String(r[rsh.stationName]).trim():'')||s?.name||'';const seq=rsh.seq!==undefined?Number(r[rsh.seq]):NaN;if(!grouped.has(key))grouped.set(key,[]);grouped.get(key).push({lat:c.lat,lon:c.lon,name,seq:Number.isFinite(seq)?seq:null,id:sid});processed++}
+  localStops.clear();for(const [key,items] of grouped){items.sort((a,b)=>(a.seq??0)-(b.seq??0));localStops.set(key,items)}
+  localPaths.clear();let pathRows=0,pathSkipped=0;
+  if(routeLineRows.length){
+   const lh=headerMap(routeLineRows);
+   if(!lh.routeId||!lh.x||!lh.y)throw new Error('노선형상 파일에서 routeId / x / y 열을 찾지 못했습니다.');
+   const pathGroups=new Map();
+   for(const r of routeLineRows){const id=String(r[lh.routeId]).trim();if(!id)continue;const name=routeNames.get(id);if(!name)continue;const c=coordFromRow(r,lh);if(!c){pathSkipped++;continue}const key=norm(name),seq=lh.seq!==undefined?Number(r[lh.seq]):NaN;if(!pathGroups.has(key))pathGroups.set(key,[]);pathGroups.get(key).push({lat:c.lat,lon:c.lon,seq:Number.isFinite(seq)?seq:null});pathRows++;}
+   for(const [key,items] of pathGroups){items.sort((a,b)=>(a.seq??0)-(b.seq??0));if(items.length>1)localPaths.set(key,items.map(p=>[p.lat,p.lon]));}
+  }
+  // Map parent route aliases to the split AM/PM public variants when the source exports A/B names.
+  for(const parent of ['5000','5002','5003']){const split=[...localStops.entries()].filter(([k])=>k.startsWith(norm(parent))&&new RegExp('^'+parent+'[AB]$').test(k));if(split.length){const merged=split.flatMap(x=>x[1]);localStops.set(norm(parent),merged)}}
+  refreshAllLayers();let nStops=0;for(const v of localStops.values())nStops+=v.length;
+  setStatus('GBIS 공개 파일 불러오기 완료',`노선 ${routeNames.size.toLocaleString()}개, 정류장 ${processed.toLocaleString()}개(좌표 제외 ${skipped.toLocaleString()}개), 노선형상 ${pathRows.toLocaleString()}점(제외 ${pathSkipped.toLocaleString()}점).`);
+  toast(`공식 파일 처리 완료: ${localStops.size}개 노선 정류장 키, ${nStops.toLocaleString()}개 정류장 좌표, ${localPaths.size}개 노선 형상을 확보했습니다.`);closeModal('importModal');
+ }catch(e){console.error(e);toast(`파일 처리 실패: ${e.message||e}`);setStatus('파일 처리 실패',e.message||String(e));}
+ finally{busy(false)}
+}
+function init(){
+ map=L.map('map',{zoomControl:false,preferCanvas:true}).setView([37.45,127.05],9);L.control.zoom({position:'bottomright'}).addTo(map);
+ L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{subdomains:'abcd',maxZoom:20,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'}).addTo(map);
+ renderList();updateCounts();
+ document.getElementById('loadOsm').addEventListener('click',loadOsm);
+ document.getElementById('allOn').addEventListener('click',()=>{for(const r of [...official,...extras,...candidates])setRouteVisible(norm(r.n),true);renderList()});
+ document.getElementById('allOff').addEventListener('click',()=>{for(const r of [...official,...extras,...candidates])setRouteVisible(norm(r.n),false);renderList()});
+ document.getElementById('search').addEventListener('input',renderList);
+ document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===t));currentFilter=t.dataset.filter;renderList()}));
+ document.getElementById('fitMap').addEventListener('click',fitVisible);
+ document.getElementById('openSources').addEventListener('click',()=>openModal('sourceModal'));
+ document.getElementById('dataImport').addEventListener('click',()=>openModal('importModal'));
+ document.getElementById('importFiles').addEventListener('click',importOfficialFiles);
+ document.getElementById('mobileMenu').addEventListener('click',()=>{const s=document.getElementById('sidebar');s.classList.toggle('expanded');s.classList.toggle('collapsed');setTimeout(()=>map.invalidateSize(),250)});
+ document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>closeModal(b.dataset.close)));
+ document.querySelectorAll('.modal-backdrop').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open')}));
+ setStatus('노선 데이터 대기 중','OSM 노선관계를 불러오거나 GBIS 공개 좌표 파일을 가져오세요.');
+ if(window.innerWidth<=800)document.getElementById('sidebar').classList.add('collapsed');
+ setTimeout(()=>map.invalidateSize(),150);
+}
+if(typeof L==='undefined'){document.getElementById('statusline').textContent='Leaflet.js를 불러오지 못했습니다. 인터넷 연결을 확인해 주세요.'}else init();
+})();
+</script>
+</body>
+</html>
